@@ -1,0 +1,32 @@
+{
+  "tests": [
+    {
+      "name": "Test AI chat endpoint with valid message",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "message": "Привет, как дела?",
+        "model": "llama"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "response": "string",
+        "model": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test AI chat endpoint without message",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "message": ""
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "Message is required"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -67,6 +67,32 @@ const Index = () => {
   const [selectedModel, setSelectedModel] = useState<string>('gpt4');
   const [isTyping, setIsTyping] = useState(false);
 
+  const callAIBackend = async (userInput: string, model: string): Promise<string> => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/0a0e0a33-b555-4ac3-8ed6-b952de2816f7', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userInput,
+          model: model,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Ошибка сервера');
+      }
+
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error('AI API Error:', error);
+      return 'Извините, произошла ошибка при обращении к ИИ. Попробуйте ещё раз.';
+    }
+  };
+
   const generateResponse = (userInput: string, model: string): string => {
     const modelData = AI_MODELS.find((m) => m.id === model);
     const lowerInput = userInput.toLowerCase();
@@ -178,16 +204,28 @@ const Index = () => {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: generateResponse(currentInput, selectedModel),
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 700);
+    (async () => {
+      try {
+        const aiResponse = await callAIBackend(currentInput, selectedModel);
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: aiResponse,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } catch (error) {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: 'Извините, произошла ошибка. Попробуйте ещё раз.',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } finally {
+        setIsTyping(false);
+      }
+    })();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
