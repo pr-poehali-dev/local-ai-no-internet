@@ -67,6 +67,59 @@ const Index = () => {
   const [selectedModel, setSelectedModel] = useState<string>('gpt4');
   const [isTyping, setIsTyping] = useState(false);
 
+  const generateResponse = (userInput: string, model: string): string => {
+    const modelData = AI_MODELS.find((m) => m.id === model);
+    const lowerInput = userInput.toLowerCase();
+
+    const responses: { [key: string]: string[] } = {
+      greeting: [
+        `${modelData?.icon} Привет! Я ${modelData?.name}. Чем могу помочь?`,
+        `${modelData?.icon} Здравствуй! Готов ответить на твои вопросы.`,
+        `${modelData?.icon} Рад видеть! Что тебя интересует?`,
+      ],
+      weather: [
+        `${modelData?.icon} К сожалению, я работаю полностью офлайн и не имею доступа к актуальным данным о погоде. Но могу рассказать о том, как работают метеорологические модели!`,
+        `${modelData?.icon} Я локальный ИИ без доступа к интернету, поэтому не могу проверить погоду. Зато могу объяснить, как формируются облака!`,
+      ],
+      code: [
+        `${modelData?.icon} Конечно! Вот пример на JavaScript:\n\nconst hello = () => {\n  console.log("Hello, World!");\n};\n\nЧто именно хочешь узнать о коде?`,
+        `${modelData?.icon} Давай разберём код! Какой язык программирования тебя интересует? Python, JavaScript, TypeScript?`,
+      ],
+      ai: [
+        `${modelData?.icon} Я — ${modelData?.name}, ${modelData?.description}. Работаю полностью локально на твоём устройстве без отправки данных в интернет!`,
+        `${modelData?.icon} ${modelData?.description}. Это значит, что все твои данные остаются на твоём устройстве. Полная приватность!`,
+      ],
+      math: [
+        `${modelData?.icon} Давай решим! Например: 2 + 2 = 4, или π ≈ 3.14159. Какую задачу разбираем?`,
+        `${modelData?.icon} Математика — это интересно! Могу помочь с арифметикой, алгеброй, геометрией. Что считаем?`,
+      ],
+      default: [
+        `${modelData?.icon} Отличный вопрос! Как локальный ИИ, я могу помочь с различными задачами: программирование, объяснение концепций, создание текстов и многое другое.`,
+        `${modelData?.icon} Интересная тема! Расскажи подробнее, что именно тебя интересует?`,
+        `${modelData?.icon} Хороший запрос! Работая локально, я обрабатываю информацию прямо на твоём устройстве. Чем конкретно помочь?`,
+        `${modelData?.icon} Понял тебя! Давай разберём этот вопрос. Нужна помощь с кодом, текстом или объяснением концепции?`,
+      ],
+    };
+
+    if (lowerInput.match(/привет|здравствуй|hi|hello|hey/)) {
+      return responses.greeting[Math.floor(Math.random() * responses.greeting.length)];
+    }
+    if (lowerInput.match(/погода|weather|температура/)) {
+      return responses.weather[Math.floor(Math.random() * responses.weather.length)];
+    }
+    if (lowerInput.match(/код|code|программ|javascript|python|typescript/)) {
+      return responses.code[Math.floor(Math.random() * responses.code.length)];
+    }
+    if (lowerInput.match(/ты кто|what are you|кто ты|модель|model/)) {
+      return responses.ai[Math.floor(Math.random() * responses.ai.length)];
+    }
+    if (lowerInput.match(/\d|математика|math|посчита|вычисли|решить/)) {
+      return responses.math[Math.floor(Math.random() * responses.math.length)];
+    }
+
+    return responses.default[Math.floor(Math.random() * responses.default.length)];
+  };
+
   const handleSendMessage = () => {
     if (!input.trim()) return;
 
@@ -78,20 +131,20 @@ const Index = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsTyping(true);
 
     setTimeout(() => {
-      const selectedModelData = AI_MODELS.find((m) => m.id === selectedModel);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Отвечаю через модель ${selectedModelData?.name} ${selectedModelData?.icon}\n\nЭто демо-версия локального ИИ. В реальной версии здесь будет ответ от выбранной модели, работающей полностью офлайн на вашем устройстве без отправки данных в интернет.`,
+        content: generateResponse(currentInput, selectedModel),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setIsTyping(false);
-    }, 1500);
+    }, 800 + Math.random() * 700);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
